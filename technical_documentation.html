@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OdiGameBot Technical Documentation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 40px;
+            background-color: #f9f9f9;
+        }
+        h1, h2, h3 {
+            color: #003366;
+        }
+        code {
+            background-color: #eee;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-left: 3px solid #003366;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>OdiGameBot Technical Documentation</h1>
+
+    <h2>1. Overview</h2>
+    <p><strong>Project Name:</strong> OdiGameBot</p>
+    <p>OdiGameBot is an interactive 3D Unity chatbot system set in Bhubaneswar, Odisha. The player can trigger dialogue with NPCs, ask questions, and give navigation commands. NPCs respond using OpenAI’s ChatGPT API, animate, and move along a NavMesh to real-world-inspired landmarks.</p>
+
+    <h2>2. Features</h2>
+    <ul>
+        <li>Voice & Text Chat</li>
+        <li>ChatGPT API Integration (GPT-3.5 Turbo)</li>
+        <li>Bubble-Style UI</li>
+        <li>Dynamic Landmark Navigation</li>
+        <li>Follow & Wait Behavior</li>
+        <li>System Prompt Narrative ("Ekamra" the guide spirit)</li>
+    </ul>
+
+  <h2>3. Architecture</h2>
+<p>Component flow diagram:</p>
+<img src="images/Architecture.png" alt="Architecture Diagram" width="700">
+<ul>
+    <li>Player triggers NPC via collider.</li>
+    <li><code>NPCInteraction</code> controls UI, movement, and context parsing.</li>
+    <li><code>ChatUIManager</code> builds chat UI at runtime.</li>
+    <li><code>ChatGPTClient</code> wraps HTTP requests to OpenAI API.</li>
+    <li><code>NavMeshAgent</code> handles movement using Unity's NavMesh.</li>
+</ul>
+
+
+    <h2>4. Dependencies</h2>
+    <ul>
+        <li>Unity 2021.3+ (LTS)</li>
+        <li>TextMeshPro</li>
+        <li>StarterAssets (optional FPS/3rd person)</li>
+        <li>OpenAI API key</li>
+        <li>.NET 4.x scripting runtime</li>
+    </ul>
+
+    <h2>5. Setup & Installation</h2>
+    <ol>
+        <li>Import TextMeshPro and StarterAssets via Package Manager.</li>
+        <li>Setup scene with NavMesh, NPC GameObject, and Player prefab.</li>
+        <li>Create landmarks as empty GameObjects in the scene.</li>
+        <li>Attach <code>ChatUIManager</code> to empty GameObject and link Canvas.</li>
+        <li>Place scripts under <code>Assets/Scripts/</code>.</li>
+        <li>Set OpenAI Key in <code>ChatGPTClient</code> inspector or env var.</li>
+    </ol>
+
+    <h2>6. Inspector Configuration</h2>
+    <p><strong>NPCInteraction:</strong></p>
+    <ul>
+        <li><code>chatUIPanel</code>, <code>chatHistoryPanel</code></li>
+        <li><code>chatUIManager</code>, <code>playerTransform</code></li>
+        <li><code>navAgent</code>, <code>npcAnimator</code></li>
+        <li><code>places</code> list with name and Transform</li>
+    </ul>
+
+    <p><strong>ChatUIManager:</strong></p>
+    <ul>
+        <li><code>parentCanvas</code></li>
+    </ul>
+
+    <h2>7. Script Reference</h2>
+
+    <h3>7.1 ChatUIManager.cs</h3>
+    <pre>
+public class ChatUIManager : MonoBehaviour {
+    public void AddChatBubble(string message, bool isPlayer) { ... }
+}</pre>
+
+    <h3>7.2 NPCInteraction.cs</h3>
+    <pre>
+public class NPCInteraction : MonoBehaviour {
+    [List&lt;Place&gt;] places;
+    ChatUIManager chatUIManager;
+    void OnSendClicked() { ... }
+    void NavigateTo(string locationName) { ... }
+}</pre>
+
+    <h3>7.3 ChatGPTClient.cs</h3>
+    <pre>
+public IEnumerator SendMessageToChatGPT(string userPrompt, Action&lt;string&gt; onReply)</pre>
+
+    <h3>7.4 SpeechRecognizer.cs & TextToSpeech.cs</h3>
+    <p>Optional STT/TTS integrations for voice input/output.</p>
+
+    <h2>8. Interaction Flow</h2>
+    <ol>
+        <li>Player enters NPC trigger → Chat/Ignore panel opens.</li>
+        <li>Click Chat → Chat panel appears, input enabled, movement disabled.</li>
+        <li>Player speaks/types → AI prompt built → Sent to ChatGPT.</li>
+        <li>Response displayed → Context parsed (follow, go to landmark).</li>
+        <li>Movement logic with wait/resume based on player distance.</li>
+    </ol>
+
+    <h2>9. Data Structures</h2>
+    <pre>
+[Serializable]
+public class Place {
+    public string placeName;
+    public Transform placeTransform;
+}
+</pre>
+
+    <h2>10. Story & System Prompt</h2>
+    <p>You are Ekamra, an ancient guide spirit bound to Bhubaneswar... (assign this to <code>ChatGPTClient.systemPrompt</code>).</p>
+
+    <h2>11. Future Enhancements</h2>
+    <ul>
+        <li>Better NLP for multi-word locations</li>
+        <li>Minimap or map markers</li>
+        <li>Persist chat history</li>
+        <li>Emotion/sentiment detection</li>
+        <li>Idle/breath animations</li>
+    </ul>
+
+    <h2>12. Versioning</h2>
+    <ul>
+        <li>v1.0: Core features</li>
+        <li>v1.1: Voice and landmark updates</li>
+        <li>v2.0: Multiplayer, dynamic events</li>
+    </ul>
+</body>
+</html>
