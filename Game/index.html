@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>OdiTheGameBot</title>
+  <link rel="shortcut icon" href="TemplateData/favicon.ico">
+  <link rel="stylesheet" href="TemplateData/style.css">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
+
+    #unity-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    canvas#unity-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    #unity-loading-bar {
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      text-align: center;
+      z-index: 10;
+    }
+
+    #unity-progress-bar-empty {
+      width: 80%;
+      height: 10px;
+      background: #ccc;
+      margin: auto;
+    }
+
+    #unity-progress-bar-full {
+      height: 100%;
+      width: 0%;
+      background: #4CAF50;
+    }
+
+    #unity-footer {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      text-align: center;
+      color: white;
+      font-family: sans-serif;
+      font-size: 14px;
+      z-index: 10;
+    }
+
+    #unity-warning {
+      position: absolute;
+      top: 0;
+      width: 100%;
+      text-align: center;
+      z-index: 20;
+    }
+
+    /* Modal Styling */
+    #npc-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    #npc-modal {
+      background-color: #ffffff;
+      padding: 30px 40px;
+      border-radius: 10px;
+      text-align: center;
+      max-width: 90%;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+      font-family: sans-serif;
+    }
+
+    #npc-modal p {
+      font-size: 20px;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    #close-npc-modal {
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="unity-container" class="unity-desktop">
+    <canvas id="unity-canvas" tabindex="-1"></canvas>
+    <div id="unity-loading-bar">
+      <div id="unity-progress-bar-empty">
+        <div id="unity-progress-bar-full"></div>
+      </div>
+    </div>
+    <div id="unity-warning"></div>
+    <div id="unity-footer">
+      <div id="unity-webgl-logo"></div>
+      <div id="unity-fullscreen-button">[Fullscreen]</div>
+      <div id="unity-build-title">OdiTheGameBot</div>
+    </div>
+  </div>
+
+  <!-- Modal Overlay -->
+  <div id="npc-modal-overlay">
+    <div id="npc-modal">
+      <p>Approach an NPC and Start Chatting</p>
+      <button id="close-npc-modal">Close</button>
+    </div>
+  </div>
+
+  <script>
+    var container = document.querySelector("#unity-container");
+    var canvas = document.querySelector("#unity-canvas");
+    var loadingBar = document.querySelector("#unity-loading-bar");
+    var progressBarFull = document.querySelector("#unity-progress-bar-full");
+    var fullscreenButton = document.querySelector("#unity-fullscreen-button");
+    var warningBanner = document.querySelector("#unity-warning");
+
+    function unityShowBanner(msg, type) {
+      function updateBannerVisibility() {
+        warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+      }
+      var div = document.createElement('div');
+      div.innerHTML = msg;
+      warningBanner.appendChild(div);
+      if (type === 'error') {
+        div.style = 'background: red; padding: 10px;';
+      } else {
+        if (type === 'warning') div.style = 'background: yellow; padding: 10px;';
+        setTimeout(() => {
+          warningBanner.removeChild(div);
+          updateBannerVisibility();
+        }, 5000);
+      }
+      updateBannerVisibility();
+    }
+
+    var buildUrl = "Build";
+    var loaderUrl = buildUrl + "/public.loader.js";
+    var config = {
+      dataUrl: buildUrl + "/public.data",
+      frameworkUrl: buildUrl + "/public.framework.js",
+      codeUrl: buildUrl + "/public.wasm",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "MotionWave Studios",
+      productName: "OdiTheGameBot",
+      productVersion: "0.1",
+      showBanner: unityShowBanner
+    };
+
+    // Mobile settings
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      var meta = document.createElement('meta');
+      meta.name = 'viewport';
+      meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no';
+      document.head.appendChild(meta);
+      container.className = "unity-mobile";
+      canvas.className = "unity-mobile";
+    }
+
+    // Canvas background image (optional)
+    canvas.style.background = "url('" + buildUrl + "/public.jpg') center / cover";
+    loadingBar.style.display = "block";
+
+    // Load Unity WebGL build
+    var script = document.createElement("script");
+    script.src = loaderUrl;
+    script.onload = () => {
+      createUnityInstance(canvas, config, (progress) => {
+        progressBarFull.style.width = (100 * progress) + "%";
+      }).then((unityInstance) => {
+        loadingBar.style.display = "none";
+        fullscreenButton.onclick = () => {
+          unityInstance.SetFullscreen(1);
+        };
+      }).catch((message) => {
+        alert(message);
+      });
+    };
+    document.body.appendChild(script);
+
+    // Modal close functionality
+    document.getElementById('close-npc-modal').onclick = function () {
+      document.getElementById('npc-modal-overlay').style.display = 'none';
+    };
+  </script>
+</body>
+</html>
+<!-- This HTML file is the entry point for the Unity WebGL build of OdiTheGameBot. It includes styles, scripts, and a modal for NPC interactions. -->
+<!-- The Unity instance is created dynamically, and the loading bar is displayed during the loading process. -->
+<!-- The modal is designed to prompt users to interact with NPCs in the game. -->
+<!-- The code also handles fullscreen functionality and mobile responsiveness. -->
